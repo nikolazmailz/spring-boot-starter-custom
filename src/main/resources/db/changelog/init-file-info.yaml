@@ -1,0 +1,34 @@
+databaseChangeLog:
+  - changeSet:
+      id: "1"
+      author: "superdev"
+      changes:
+        - createTable:
+            tableName: file_info
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: filename
+                  type: VARCHAR(512)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: login
+                  type: VARCHAR(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: size
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
