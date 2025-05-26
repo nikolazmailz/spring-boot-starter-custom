@@ -1,6 +1,11 @@
+logging:
+  level:
+    liquibase: DEBUG
+    org.springframework.boot.autoconfigure.liquibase: DEBUG
 spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
+    enabled: true
 
 file-info:
   remote:

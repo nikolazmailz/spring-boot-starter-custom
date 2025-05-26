@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import ru.app.application.FileInfoApplicationService
-import io.kotest.core.listeners.TestListener
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import mu.KotlinLogging
@@ -14,14 +13,24 @@ import reactor.core.publisher.Flux
 import ru.app.domain.FileInfo
 import java.time.Instant
 import java.util.UUID
-import kotlin.time.Duration.Companion.seconds
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import io.kotest.extensions.spring.SpringExtension
+import org.springframework.core.io.buffer.DataBuffer
+import org.springframework.test.context.DynamicPropertyRegistry
+import org.springframework.test.context.DynamicPropertySource
+import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
+import ru.app.TestApplication
+import ru.app.domain.FileInfoRepository
 
-@SpringBootTest
+@SpringBootTest(
+    classes = [TestApplication::class],
+    webEnvironment = SpringBootTest.WebEnvironment.NONE
+)
 @ActiveProfiles("test")
-//@Testcontainers
+@Testcontainers
 class FileInfoApplicationServiceE2ETest: ShouldSpec() {
 
     private val log = KotlinLogging.logger {}
@@ -31,7 +40,19 @@ class FileInfoApplicationServiceE2ETest: ShouldSpec() {
     @Autowired
     private lateinit var service: FileInfoApplicationService
 
+    @Autowired
+    private lateinit var repository: FileInfoRepository
+
     companion object {
+
+        @Container
+        private val postgres = PostgreSQLContainer<Nothing>("postgres:14.9").apply {
+            withDatabaseName("testdb")
+            withUsername("test")
+            withPassword("test")
+//            withStartupTimeoutSeconds(60)
+            start()
+        }
 
         private val mockWebServer = MockWebServer().apply {
             start()
@@ -42,9 +63,40 @@ class FileInfoApplicationServiceE2ETest: ShouldSpec() {
             )
         }
 
+        @JvmStatic
+        @DynamicPropertySource
+        fun configureProperties(registry: DynamicPropertyRegistry) {
+            // R2DBC
+            registry.add("spring.r2dbc.url") {
+                "r2dbc:postgresql://${postgres.host}:${postgres.firstMappedPort}/${postgres.databaseName}"
+            }
+            registry.add("spring.r2dbc.username", postgres::getUsername)
+            registry.add("spring.r2dbc.password", postgres::getPassword)
+
+            // JDBC-datasource (для Liquibase)
+            registry.add("spring.datasource.url") {
+                "jdbc:postgresql://${postgres.host}:${postgres.firstMappedPort}/${postgres.databaseName}"
+            }
+            registry.add("spring.datasource.username", postgres::getUsername)
+            registry.add("spring.datasource.password", postgres::getPassword)
+            registry.add("spring.datasource.driver-class-name") { "org.postgresql.Driver" }
+
+
+
+            // Мастер-чейндж-лог
+            registry.add("spring.liquibase.change-log") {
+                "classpath:db/changelog/db.changelog-master.yaml"
+            }
+        }
+
     }
 
     init {
+
+        // очищаем перед каждым тестом
+        beforeTest {
+            repository.deleteAll().block()
+        }
 
         should("отправлять файл в remote, получать metadata и сохранять в БД") {
             // подготовим ожидание от MockWebServer
@@ -68,14 +120,12 @@ class FileInfoApplicationServiceE2ETest: ShouldSpec() {
             )
 
             // создаём Flux<DataBuffer> для «файла»
-            val content = Flux.just(
+            val content: Flux<DataBuffer> = Flux.just(
                 DefaultDataBufferFactory().wrap("hello world".toByteArray())
             )
 
             // вызываем приложение
-            val result: FileInfo? = service
-                .processFile(content, fakeFilename, "user1")
-                .block(5.seconds)
+            val result: FileInfo? = service.processFile(content, fakeFilename, "user1").block()
 
             // проверяем ответ
             result shouldNotBe null
@@ -86,11 +136,11 @@ class FileInfoApplicationServiceE2ETest: ShouldSpec() {
             log.info { "Verified service returned: $result" }
 
             // проверим, что Entity сохранилась в БД
-//            val saved = repository.findById(fakeId).block()
-//            saved shouldNotBe null
-//            saved!!.id shouldBe fakeId
-//            saved.filename shouldBe fakeFilename
-//            saved.size shouldBe fakeSize
+            val saved = repository.findById(fakeId).block()
+            saved shouldNotBe null
+            saved!!.id shouldBe fakeId
+            saved.filename shouldBe fakeFilename
+            saved.size shouldBe fakeSize
         }
     }
 

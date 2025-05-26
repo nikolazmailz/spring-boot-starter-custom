@@ -27,6 +27,12 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
+    // Spring JDBC для Liquibase
+    implementation("org.springframework.boot:spring-boot-starter-jdbc")
+    // Драйвер PostgreSQL для JDBC-datasource
+    runtimeOnly("org.postgresql:postgresql")
+
+
     // Kotlin stdlib
     implementation(kotlin("stdlib"))
 

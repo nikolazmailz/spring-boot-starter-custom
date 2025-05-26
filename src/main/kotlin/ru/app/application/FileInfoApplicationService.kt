@@ -7,10 +7,12 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import ru.app.application.feature.FileInfoRemoteService
 import ru.app.domain.FileInfo
+import ru.app.domain.FileInfoRepository
 
 @Service
 class FileInfoApplicationService(
-    private val fileInfoRemoteService: FileInfoRemoteService
+    private val fileInfoRemoteService: FileInfoRemoteService,
+    private val fileInfoRepository: FileInfoRepository
 ) {
 
     private val log = KotlinLogging.logger {}
@@ -22,14 +24,16 @@ class FileInfoApplicationService(
     ): Mono<FileInfo> =
         fileInfoRemoteService
             .sendFile(content, filename, login)
-            .map { meta ->
-                FileInfo(
+            .flatMap { meta ->
+                val entity = FileInfo(
                     id = meta.id,
                     filename = meta.filename,
                     login = login,
                     size = meta.size,
                     createdAt = meta.createdAt
                 )
+                fileInfoRepository
+                    .save(entity)
             }
             .doOnNext { fi ->
                 log.info { "Processed FileInfo: $fi" }
