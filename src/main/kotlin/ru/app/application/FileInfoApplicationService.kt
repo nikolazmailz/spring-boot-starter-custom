@@ -31,7 +31,7 @@ class FileInfoApplicationService(
                     login = login,
                     size = meta.size,
                     createdAt = meta.createdAt
-                )
+                ).setAsNew()
                 fileInfoRepository
                     .save(entity)
             }

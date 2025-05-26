@@ -27,7 +27,11 @@ import ru.app.domain.FileInfoRepository
 
 @SpringBootTest(
     classes = [TestApplication::class],
-    webEnvironment = SpringBootTest.WebEnvironment.NONE
+    webEnvironment = SpringBootTest.WebEnvironment.NONE,
+    properties = [
+        "logging.level.liquibase=TRACE",
+        "logging.level.org.springframework.boot.autoconfigure.liquibase=TRACE"
+    ]
 )
 @ActiveProfiles("test")
 @Testcontainers
@@ -46,11 +50,10 @@ class FileInfoApplicationServiceE2ETest: ShouldSpec() {
     companion object {
 
         @Container
-        private val postgres = PostgreSQLContainer<Nothing>("postgres:14.9").apply {
+        private val postgres = PostgreSQLContainer<Nothing>("postgres:15").apply {
             withDatabaseName("testdb")
-            withUsername("test")
-            withPassword("test")
-//            withStartupTimeoutSeconds(60)
+            withUsername("postgresql")
+            withPassword("postgresql")
             start()
         }
 
@@ -74,19 +77,20 @@ class FileInfoApplicationServiceE2ETest: ShouldSpec() {
             registry.add("spring.r2dbc.password", postgres::getPassword)
 
             // JDBC-datasource (для Liquibase)
-            registry.add("spring.datasource.url") {
+            registry.add("spring.liquibase.enabled") {
+                "true"
+            }
+            registry.add("spring.liquibase.url") {
                 "jdbc:postgresql://${postgres.host}:${postgres.firstMappedPort}/${postgres.databaseName}"
             }
-            registry.add("spring.datasource.username", postgres::getUsername)
-            registry.add("spring.datasource.password", postgres::getPassword)
-            registry.add("spring.datasource.driver-class-name") { "org.postgresql.Driver" }
-
-
+            registry.add("spring.liquibase.user", postgres::getUsername)
+            registry.add("spring.liquibase.password", postgres::getPassword)
 
             // Мастер-чейндж-лог
             registry.add("spring.liquibase.change-log") {
                 "classpath:db/changelog/db.changelog-master.yaml"
             }
+
         }
 
     }
@@ -95,7 +99,7 @@ class FileInfoApplicationServiceE2ETest: ShouldSpec() {
 
         // очищаем перед каждым тестом
         beforeTest {
-            repository.deleteAll().block()
+            repository.deleteAll()
         }
 
         should("отправлять файл в remote, получать metadata и сохранять в БД") {
@@ -143,5 +147,4 @@ class FileInfoApplicationServiceE2ETest: ShouldSpec() {
             saved.size shouldBe fakeSize
         }
     }
-
 }

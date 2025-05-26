@@ -1,1 +1,1 @@
-rootProject.name = "file-upload-starter"
+rootProject.name = "file-info-starter"

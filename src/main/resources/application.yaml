@@ -1,11 +1,25 @@
 logging:
   level:
-    liquibase: DEBUG
-    org.springframework.boot.autoconfigure.liquibase: DEBUG
+    root: INFO
+    liquibase: TRACE
+    org.springframework.boot.autoconfigure.liquibase: TRACE
+
 spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/testdb   # или H2, если тесты
+    driver-class-name: org.postgresql.Driver
+    username: postgresql
+    password: postgresql
+
+  # ваш R2DBC
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/testdb
+    username: postgresql
+    password: postgresql
+
   liquibase:
-    change-log: classpath:db/changelog/db.changelog-master.yaml
     enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
 
 file-info:
   remote:
