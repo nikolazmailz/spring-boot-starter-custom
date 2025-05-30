@@ -1,1 +1,3 @@
-rootProject.name = "file-info-starter"
+rootProject.name = "spring-boot-starter-multi-custom"
+
+include("repository-starter")

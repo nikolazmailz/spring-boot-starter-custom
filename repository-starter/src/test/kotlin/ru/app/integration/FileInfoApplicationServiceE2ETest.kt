@@ -102,6 +102,17 @@ class FileInfoApplicationServiceE2ETest: ShouldSpec() {
             repository.deleteAll()
         }
 
+        should("возвращать все записи через findAll") {
+            val a = FileInfo(UUID.randomUUID(), "a.txt", "u1", 10, Instant.now()).setAsNew()
+            val b = FileInfo(UUID.randomUUID(), "b.txt", "u2", 20, Instant.now()).setAsNew()
+
+            repository.saveAll(listOf(a, b)).collectList().block()
+
+            val list = repository.findAll().collectList().block()
+            list!!.size shouldBe 2
+            list.map { it.filename }.toSet() shouldBe setOf("a.txt", "b.txt")
+        }
+
         should("отправлять файл в remote, получать metadata и сохранять в БД") {
             // подготовим ожидание от MockWebServer
             val fakeId = UUID.randomUUID()

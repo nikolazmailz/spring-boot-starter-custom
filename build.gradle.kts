@@ -1,72 +1,126 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 plugins {
     id("org.springframework.boot") version "3.4.4"
     id("io.spring.dependency-management") version "1.1.7"
-    val kotlinVersion = "1.9.24"
+    val kotlinVersion = "1.9.22"
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.spring") version kotlinVersion
     kotlin("plugin.serialization") version kotlinVersion
 }
 
-group = "com.example"
-version = "0.0.1-SNAPSHOT"
+//group = "com.example"
+//version = "0.0.1-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_21
 
 repositories {
     mavenCentral()
 }
 
-dependencies {
+allprojects {
+    group = "ru.app"
 
-    implementation("org.springframework.boot:spring-boot-configuration-processor")
+    repositories {
+        mavenCentral()
+//        mavenLocal()
+//        google() // если вдруг нужен, не обязателен
+    }
+}
 
-    // Kotlin stdlib
-    implementation(kotlin("stdlib"))
+subprojects {
 
-    // jackson
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    apply {
+        plugin("io.spring.dependency-management")
+        plugin("org.springframework.boot")
+        plugin("org.jetbrains.kotlin.jvm")
+        plugin("org.jetbrains.kotlin.plugin.spring")
+        plugin("kotlin-kapt")
+        plugin("maven-publish")
+    }
 
-    // Spring Boot, WebFlux, R2DBC, Liquibase
-    implementation("org.springframework.boot:spring-boot-starter-webflux")
+    dependencies {
+        val implementation by configurations
+        val testImplementation by configurations
+        val kapt by configurations
+        implementation(kotlin("reflect"))
+        implementation(kotlin("stdlib-jdk8"))
 
-    // database
-    implementation("org.springframework.boot:spring-boot-starter-jdbc")
-    implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
-    implementation("io.r2dbc:r2dbc-postgresql:0.8.13.RELEASE")
-    runtimeOnly("org.postgresql:postgresql")
+        implementation("org.springframework.boot:spring-boot-configuration-processor")
 
-    // liquibase
-    implementation("org.liquibase:liquibase-core")
+        // Kotlin stdlib
+        implementation(kotlin("stdlib"))
+
+        // jackson
+        implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+
+        // Spring Boot, WebFlux, R2DBC, Liquibase
+        implementation("org.springframework.boot:spring-boot-starter-webflux")
+
+        // database
+        implementation("org.springframework.boot:spring-boot-starter-jdbc")
+        implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
+        implementation("io.r2dbc:r2dbc-postgresql:0.8.13.RELEASE")
+        runtimeOnly("org.postgresql:postgresql")
+
+        // liquibase
+        implementation("org.liquibase:liquibase-core")
 
 //    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
-    // Logging
-    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
+        // Logging
+        implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
 
-    // Spring Boot Test (без JUnit 4)
-    testImplementation("org.springframework.boot:spring-boot-starter-test") {
-        exclude(group = "org.junit.vintage")
+        // Spring Boot Test (без JUnit 4)
+        testImplementation("org.springframework.boot:spring-boot-starter-test") {
+            exclude(group = "org.junit.vintage")
+        }
+
+        // Kotest для тестов
+        testImplementation("io.kotest:kotest-runner-junit5:5.9.0")
+        testImplementation("io.kotest:kotest-assertions-core:5.9.0")
+        testImplementation("io.kotest.extensions:kotest-extensions-spring:1.1.2")
+
+        // Reactor Test
+        testImplementation("io.projectreactor:reactor-test")
+
+        // Mockk (если нужны моки)
+        testImplementation("io.mockk:mockk:1.13.10")
+
+        // Testcontainers для Postgres
+        testImplementation("org.testcontainers:junit-jupiter:1.19.7")
+        testImplementation("org.testcontainers:postgresql:1.19.7")
+
+        // MockWebServer для мока HTTP-сервиса
+        testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+
     }
 
-    // Kotest для тестов
-    testImplementation("io.kotest:kotest-runner-junit5:5.9.0")
-    testImplementation("io.kotest:kotest-assertions-core:5.9.0")
-    testImplementation("io.kotest.extensions:kotest-extensions-spring:1.1.2")
+    tasks.getByName<BootJar>("bootJar") {
+        enabled = false
+    }
+    tasks.getByName<Jar>("jar") {
+        enabled = true
+    }
 
-    // Reactor Test
-    testImplementation("io.projectreactor:reactor-test")
+    tasks.withType<KotlinCompile> {
+        kotlinOptions {
+            freeCompilerArgs = listOf("-Xjsr305=strict")
+            jvmTarget = "21"
+        }
+    }
 
-    // Mockk (если нужны моки)
-    testImplementation("io.mockk:mockk:1.13.10")
+    tasks.withType<Test> {
+        useJUnitPlatform()
+    }
 
-    // Testcontainers для Postgres
-    testImplementation("org.testcontainers:junit-jupiter:1.19.7")
-    testImplementation("org.testcontainers:postgresql:1.19.7")
+}
 
-    // MockWebServer для мока HTTP-сервиса
-    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
-
+tasks.getByName<BootJar>("bootJar") {
+    enabled = false
+}
+tasks.getByName<Jar>("jar") {
+    enabled = true
 }
 
 tasks.withType<KotlinCompile> {
@@ -79,6 +133,7 @@ tasks.withType<KotlinCompile> {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
 
 configurations {
     compileOnly {

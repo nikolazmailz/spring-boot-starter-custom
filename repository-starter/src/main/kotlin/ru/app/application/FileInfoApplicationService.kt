@@ -26,7 +26,7 @@ class FileInfoApplicationService(
             .sendFile(content, filename, login)
             .flatMap { meta ->
                 val entity = FileInfo(
-                    id = meta.id,
+                    fileId = meta.id,
                     filename = meta.filename,
                     login = login,
                     size = meta.size,

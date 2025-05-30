@@ -13,7 +13,8 @@ import org.springframework.data.annotation.Transient
  */
 @Table("file_info")
 data class FileInfo(
-    private val id: UUID,
+    @Id
+    private val fileId: UUID,
     val filename: String,
     val login: String,
     val size: Long,
@@ -25,7 +26,7 @@ data class FileInfo(
 
     @Id
     override fun getId(): UUID {
-        return id
+        return fileId
     }
 
     override fun isNew() = isNew

@@ -7,7 +7,7 @@ databaseChangeLog:
             tableName: file_info
             columns:
               - column:
-                  name: id
+                  name: file_id
                   type: UUID
                   constraints:
                     primaryKey: true
