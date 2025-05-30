@@ -1,3 +1,4 @@
 rootProject.name = "spring-boot-starter-multi-custom"
 
-include("repository-starter")
+include("starter-repository")
+include("starter-graphql")

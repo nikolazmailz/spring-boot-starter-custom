@@ -1,0 +1,15 @@
+{
+  "data": {
+    "users": [
+      {
+        "id": "a7a3fd73-fd7a-11ef-befa-e43d1aa1a7a7",
+        "lastName": "Пушкарёв",
+        "middleName": "Викторович",
+        "firstName": "Николай",
+        "displayName": "Пушкарёв Николай Викторович",
+        "email": "email@mail.com",
+        "login": "login@mail.com"
+      }
+    ]
+  }
+}
