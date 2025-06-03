@@ -1,8 +1,6 @@
-
-
-
+### starter-repository
 ```
-file-info-starter/                  # Главный Gradle-модуль (spring boot starter)
+starter-repository/                  # Главный Gradle-модуль (spring boot starter)
 │
 ├── build.gradle.kts                # Gradle build file
 ├── settings.gradle.kts
