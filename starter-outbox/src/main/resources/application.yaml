@@ -1,0 +1,22 @@
+outbox:
+  enabled: true
+  poll:
+    enabled: true
+    fixedDelay: 500ms
+    initialDelay: 1s
+    batchSize: 100
+  publisher:
+    kafka:
+      enabled: true
+      defaultTopic: app.outbox.default
+      topics:
+        user-events: app.users.events
+        audit: app.audit.events
+    http:
+      clients:
+        - id: notifications
+          baseUrl: https://notify.internal.local
+          connectTimeout: 2s
+          readTimeout: 3s
+          defaultHeaders:
+            Authorization: Bearer ${NOTIFY_TOKEN}

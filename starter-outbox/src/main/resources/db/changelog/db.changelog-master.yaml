@@ -1,0 +1,166 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-outbox-table
+      author: starter-outbox
+      changes:
+        - createTable:
+            tableName: outbox
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                  # Уникальный идентификатор записи в outbox. Генерируется приложением.
+                  # Используется как primary key.
+              - column:
+                  name: aggregate_type
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                  # Тип агрегата (например, "Order", "User").
+                  # Позволяет понимать из какого домена пришло событие.
+              - column:
+                  name: aggregate_id
+                  type: VARCHAR(200)
+                  constraints:
+                    nullable: false
+                  # Идентификатор конкретного агрегата (например, ID заказа).
+                  # В связке с aggregate_type определяет источник события.
+              - column:
+                  name: event_type
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                  # Тип события (например, "CREATED", "UPDATED", "DELETED").
+                  # Позволяет слушателям понимать, что произошло.
+              - column:
+                  name: destination
+                  type: VARCHAR(200)
+                  remarks: "e.g. kafka:topicName | http:clientId:/path"
+                  constraints:
+                    nullable: false
+                  # Канал доставки события.
+                  # Примеры: kafka:orders-topic или http:notifications:/send.
+              - column:
+                  name: payload
+                  type: TEXT
+                  constraints:
+                    nullable: false
+                  # Тело события (JSON или сериализованная структура).
+                  # Содержит данные, которые должны быть доставлены.
+              - column:
+                  name: headers
+                  type: JSONB
+                  defaultValueComputed: "'{}'::jsonb"
+                  constraints:
+                    nullable: false
+                  # Дополнительные заголовки (например, Correlation-ID, Content-Type).
+                  # Хранятся в JSON-формате.
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  remarks: "NEW | IN_PROGRESS | SENT | RETRY | DEAD"
+                  constraints:
+                    nullable: false
+                  # Текущий статус записи.
+                  # NEW – новая; IN_PROGRESS – в процессе отправки;
+                  # SENT – успешно отправлено; RETRY – ошибка, запланирован повтор;
+                  # DEAD – превышен лимит ретраев.
+              - column:
+                  name: retries
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+                  # Количество попыток отправки.
+                  # Используется вместе с retry-политикой (экспоненциальный бэкофф).
+              - column:
+                  name: available_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: false
+                  # Время, начиная с которого запись доступна для обработки.
+                  # Позволяет реализовать задержки при ретраях.
+              - column:
+                  name: dedup_key
+                  type: VARCHAR(200)
+                  constraints:
+                    nullable: true
+                  # Ключ для дедупликации.
+                  # Если задан – гарантируется уникальность (UNIQUE constraint).
+                  # Используется для защиты от повторной доставки.
+              - column:
+                  name: error_message
+                  type: TEXT
+                  constraints:
+                    nullable: true
+                  # Последнее сообщение об ошибке при отправке (если есть).
+                  # Полезно для отладки и мониторинга.
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: "now()"
+                  constraints:
+                    nullable: false
+                  # Время создания записи (по умолчанию текущее время).
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: "now()"
+                  constraints:
+                    nullable: false
+                  # Время последнего обновления записи.
+                  # Автоматически обновляется триггером при изменении строки.
+
+        - addUniqueConstraint:
+            tableName: outbox
+            columnNames: dedup_key
+            constraintName: uq_outbox_dedup_key
+            # Гарантирует, что для каждого dedup_key будет только одна запись.
+
+        - createIndex:
+            tableName: outbox
+            indexName: idx_outbox_status_available_at
+            columns:
+              - column:
+                  name: status
+              - column:
+                  name: available_at
+            # Индекс для ускорения выборки при поллинге (по статусу и времени доступности).
+
+        - createIndex:
+            tableName: outbox
+            indexName: idx_outbox_dest_status_available_at
+            columns:
+              - column:
+                  name: destination
+              - column:
+                  name: status
+              - column:
+                  name: available_at
+            # Дополнительный индекс: ускоряет выборку, если сообщения обрабатываются по destination.
+
+  # (опционально) триггер авто-обновления updated_at
+  - changeSet:
+      id: 002-updated-at-trigger
+      author: ru.outbox
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              create or replace function set_updated_at()
+              returns trigger as $$
+              begin
+                new.updated_at = now();
+                return new;
+              end;
+              $$ language plpgsql;
+
+              drop trigger if exists trg_outbox_set_updated_at on outbox;
+              create trigger trg_outbox_set_updated_at
+              before update on outbox
+              for each row
+              execute function set_updated_at();
+            # Триггер: перед каждым UPDATE автоматически проставляет updated_at = now().

@@ -44,21 +44,15 @@ subprojects {
         val testImplementation by configurations
         val kapt by configurations
         implementation(kotlin("reflect"))
-        implementation(kotlin("stdlib-jdk8"))
+        implementation(kotlin("stdlib"))
 
         implementation("org.springframework.boot:spring-boot-configuration-processor")
-
-        // Kotlin stdlib
-        implementation(kotlin("stdlib"))
 
         // jackson
         implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
         // Spring Boot, WebFlux, R2DBC, Liquibase
         implementation("org.springframework.boot:spring-boot-starter-webflux")
-
-
-//    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
         // Logging
         implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
