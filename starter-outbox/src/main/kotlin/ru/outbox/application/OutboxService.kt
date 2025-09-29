@@ -20,10 +20,4 @@ interface OutboxService {
      * - пометить SENT/FAILED.
      */
     suspend fun pollOnce(batchSize: Int): PollResult
-
-    data class PollResult(
-        val locked: Int,
-        val sent: Int,
-        val failed: Int
-    )
 }

@@ -4,7 +4,6 @@ import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.outbox.application.api.OutboxRepository
-import ru.outbox.application.OutboxService
 import ru.outbox.application.api.PublisherRegistry
 import ru.outbox.domain.OutboxRecord
 
@@ -42,10 +41,10 @@ class OutboxServiceImpl(
      * чтобы не держать блокировки долго (зависит от реализации репозитория).
      */
     @Transactional
-    override suspend fun pollOnce(batchSize: Int): OutboxService.PollResult {
+    override suspend fun pollOnce(batchSize: Int): PollResult {
         // 1) Забираем батч; реализация репозитория сама помечает записи IN_PROGRESS в рамках транзакции.
         val batch: List<OutboxRecord> = repository.lockBatchAndFetch(limit = batchSize)
-        if (batch.isEmpty()) return OutboxService.PollResult(locked = 0, sent = 0, failed = 0)
+        if (batch.isEmpty()) return PollResult(locked = 0, sent = 0, failed = 0)
 
         // 2) Публикуем — уже после фиксации транзакции «броней».
         var sent = 0
@@ -62,7 +61,7 @@ class OutboxServiceImpl(
                 failed++
             }
         }
-        return OutboxService.PollResult(
+        return PollResult(
             locked = batch.size,
             sent = sent,
             failed = failed

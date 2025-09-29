@@ -53,7 +53,7 @@ data class OutboxRecord(
             aggregateType = aggregateType,
             aggregateId = aggregateId,
             eventType = eventType,
-            destination = Destination.Http(clientId, path),
+            destination = Destination.Http(clientId, path, "POST"),
             payload = payload,
             headers = headers,
 //            dedupKey = dedupKey

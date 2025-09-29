@@ -1,7 +1,6 @@
 package ru.outbox.config
 
-import ru.outbox.application.PollingSchedulerAsync
-import ru.outbox.application.PollingSchedulerBlocking
+import ru.outbox.infra.scheduler.PollingSchedulerAsync
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
@@ -18,6 +17,7 @@ import ru.outbox.infra.db.R2dbcOutboxRepository
 import ru.outbox.infra.http.HttpClientRegistry
 import ru.outbox.infra.http.WebClientPublisher
 import org.springframework.scheduling.annotation.EnableScheduling
+import ru.outbox.infra.scheduler.PollingSchedulerBlocking
 
 /**
  * Базовая автоконфигурация: свойства, репозиторий, сервис, реестр паблишеров и HTTP-паблишер.
@@ -67,7 +67,7 @@ class OutboxAutoConfiguration {
     fun outboxPollingScheduler(
         service: OutboxService,
         props: OutboxProperties
-    ): PollingSchedulerAsync = PollingSchedulerAsync(service, props)
+    ): PollingSchedulerBlocking = PollingSchedulerBlocking(service, props)
 }
 
 

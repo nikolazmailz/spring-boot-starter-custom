@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: 001-create-outbox-table
-      author: ru.outbox
+      author: starter-outbox
       changes:
         - createTable:
             tableName: outbox

@@ -15,7 +15,10 @@ import ru.outbox.domain.OutboxRecord
  * Реактивный паблишер для HTTP-назначений.
  * Поддерживает несколько сервисов через HttpClientRegistry.
  */
-@Component
+// Todo скорее всего Publisher должен быть реализован на стороне приложения
+// У меня ситуация когда надо получить пачку получателей, и всем отправить одно сообщение.
+// в целом кажется, что в payload можно хранить не весь объект а чисто айди
+//@Component
 class WebClientPublisher(
     private val registry: HttpClientRegistry
 ) : OutboxPublisher {

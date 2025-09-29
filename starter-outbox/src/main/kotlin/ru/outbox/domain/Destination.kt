@@ -42,7 +42,7 @@ sealed interface Destination {
 
                 "http" -> {
                     require(parts.size == 3) { "Http destination must be 'http:<clientId>:/path'" }
-                    Http(parts[1], parts[2])
+                    Http(parts[1], parts[2], "POST")
                 }
 
                 else -> error("Unknown destination kind '${parts[0]}'")

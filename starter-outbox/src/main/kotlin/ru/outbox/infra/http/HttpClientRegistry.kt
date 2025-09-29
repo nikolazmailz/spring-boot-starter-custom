@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
  *  - создаёт WebClient для каждого outbox.publisher.http.clients[*]
  *  - применяет таймауты и дефолтные заголовки
  */
-@Component
+//@Component
 class HttpClientRegistry(
     props: OutboxProperties
 ) {

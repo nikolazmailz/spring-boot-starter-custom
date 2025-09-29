@@ -1,9 +1,8 @@
-package ru.outbox.application
+package ru.outbox.infra.scheduler
 
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import org.springframework.scheduling.annotation.Scheduled
-import org.springframework.stereotype.Component
 import ru.outbox.application.OutboxService
 import ru.outbox.config.OutboxProperties
 
