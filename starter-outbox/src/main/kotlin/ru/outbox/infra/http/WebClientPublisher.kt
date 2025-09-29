@@ -39,21 +39,32 @@ class WebClientPublisher(
         val contentType = record.headers["Content-Type"]?.let { MediaType.parseMediaType(it) }
             ?: MediaType.APPLICATION_JSON
 
-        val req = client.method(method)
+//        val req = client.method(method)
+//            .uri(dest.path)
+//            .headers { h ->
+//                // смержим пользовательские заголовки поверх дефолтных
+//                record.headers.forEach { (k, v) -> h.set(k, v) }
+//                // если не задан Content-Type явно — проставим
+//                if (!h.containsKey("Content-Type")) {
+//                    h.contentType = contentType
+//                }
+//            }
+//            .body(BodyInserters.fromValue(record.payload))
+//
+//        // отдаём запрос и ждём лишь статус (тело нам не нужно)
+//        val response = req.retrieve()
+//            .toBodilessEntity()
+//            .awaitSingle()
+
+        val response = client.method(method)
             .uri(dest.path)
             .headers { h ->
-                // смержим пользовательские заголовки поверх дефолтных
                 record.headers.forEach { (k, v) -> h.set(k, v) }
-                // если не задан Content-Type явно — проставим
-                if (!h.containsKey("Content-Type")) {
-                    h.contentType = contentType
-                }
+                if (!h.containsKey("Content-Type")) h.contentType = contentType
             }
             .body(BodyInserters.fromValue(record.payload))
-
-        // отдаём запрос и ждём лишь статус (тело нам не нужно)
-        val response = req.retrieve()
-            .toBodilessEntity()
+            // ВАЖНО: получаем ResponseEntity даже на 4xx/5xx, без броска
+            .exchangeToMono { resp -> resp.toBodilessEntity() }
             .awaitSingle()
 
         if (response.statusCode.is2xxSuccessful) {
