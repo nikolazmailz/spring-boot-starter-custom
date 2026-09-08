@@ -1,4 +1,4 @@
-# srhr-ms-mock-service
+# mock-service
 
 Заглушечный сервис для эмуляции внешних REST-интеграций SRHR на DEV-стенде и при локальной разработке.
 
@@ -6,7 +6,7 @@
 
 ## Назначение
 
-`srhr-ms-mock-service` используется вместо реальных внешних интеграционных систем.
+`mock-service` используется вместо реальных внешних интеграционных систем.
 
 Пример:
 
@@ -15,7 +15,7 @@ srhr-ms-paystub
       |
       | REST
       v
-srhr-ms-mock-service
+mock-service
       |
       +-- TSRM
       +-- EASUP
@@ -23,19 +23,19 @@ srhr-ms-mock-service
       +-- другие REST-интеграции
 ```
 
-На DEV-стенде URL внешних интеграций могут быть перенаправлены на `srhr-ms-mock-service`.
+На DEV-стенде URL внешних интеграций могут быть перенаправлены на `mock-service`.
 
 Например:
 
 ```text
-TSRM_INTEGRATION_SERVICE_URL=http://srhr-ms-mock-service:8080
-EASUP_INTEGRATION_SERVICE_URL=http://srhr-ms-mock-service:8080
+TSRM_INTEGRATION_SERVICE_URL=http://mock-service:8080
+EASUP_INTEGRATION_SERVICE_URL=http://mock-service:8080
 ```
 
 ## Структура проекта
 
 ```text
-srhr-ms-mock-service/
+mock-service/
 ├── mappings/
 │   ├── tsrm/
 │   ├── easup/
@@ -275,12 +275,12 @@ ENTRYPOINT ["/docker-entrypoint.sh", "--verbose"]
 
 ```yaml
 services:
-  srhr-ms-mock-service:
+  mock-service:
     build:
       context: .
       dockerfile: Dockerfile
 
-    container_name: srhr-ms-mock-service
+    container_name: mock-service
 
     ports:
       - "8089:8080"
@@ -290,9 +290,9 @@ services:
 
 ## DEV
 
-На DEV-стенде `srhr-ms-mock-service` запускается как отдельный сервис.
+На DEV-стенде `mock-service` запускается как отдельный сервис.
 
-Приложения, для которых необходимо замокировать внешние интеграции, должны использовать URL `srhr-ms-mock-service` вместо URL реальных систем.
+Приложения, для которых необходимо замокировать внешние интеграции, должны использовать URL `mock-service` вместо URL реальных систем.
 
 REST-интеграции добавляются в текущий сервис постепенно.
 
