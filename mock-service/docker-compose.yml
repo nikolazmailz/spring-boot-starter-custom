@@ -1,0 +1,12 @@
+services:
+  mock-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: mock-service
+
+    ports:
+      - "8089:8080"
+
+    restart: unless-stopped
